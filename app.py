@@ -28,28 +28,26 @@ def get_movement():
     ping = get_ping()
 
     if ping is None:
-        return 0
+        return 0, 1
 
     history.append(ping)
 
     if len(history) < 5:
-        return 0
+        return 0, 1
 
-    # 🔹 медіана (стабільніше ніж середнє)
     sorted_hist = sorted(history)
     median = sorted_hist[len(sorted_hist)//2]
 
     diff = abs(ping - median)
 
-    # 🔹 адаптивна нормалізація
-    movement = diff / (median + 20)
+    movement = min(diff / (median + 20), 1)
 
-    # 🔹 згладжування
-    movement = min(movement, 1)
+    # 🔥 псевдо-дистанція
+    distance = 1 - movement  # 0 = близько, 1 = далеко
 
-    print(f"PING={ping:.2f} MEDIAN={median:.2f} DIFF={diff:.2f} MOVE={movement:.3f}")
+    print(f"PING={ping:.2f} DIFF={diff:.2f} MOVE={movement:.3f} DIST={distance:.3f}")
 
-    return movement
+    return movement, distance
 
 
 @app.route("/")
@@ -59,10 +57,11 @@ def index():
 
 @app.route("/data")
 def data():
-    movement = get_movement()
+    movement, distance = get_movement()
     
     return jsonify({
-        "movement": movement
+        "movement": movement,
+        "distance": distance
     })
 
 
