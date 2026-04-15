@@ -6,7 +6,7 @@ from collections import deque
 
 app = Flask(__name__)
 
-ROUTER_IP = "192.168.1.1"  # зміни якщо треба
+ROUTER_IP = "8.8.8.8"  # зміни якщо треба
 history = deque(maxlen=10)
 
 def get_ping():
