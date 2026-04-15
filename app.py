@@ -1,18 +1,17 @@
 from flask import Flask, jsonify, render_template
 import subprocess
 import re
-import time
 from collections import deque
 
 app = Flask(__name__)
 
-ROUTER_IP = "8.8.8.8"  # зміни якщо треба
-history = deque(maxlen=10)
+TARGET_IP = "8.8.8.8"
+history = deque(maxlen=20)
 
 def get_ping():
     try:
         result = subprocess.check_output(
-            ["ping", "-c", "1", ROUTER_IP],
+            ["ping", "-c", "1", TARGET_IP],
             stderr=subprocess.DEVNULL
         ).decode()
 
@@ -27,7 +26,7 @@ def get_ping():
 
 def get_movement():
     ping = get_ping()
-    
+
     if ping is None:
         return 0
 
@@ -36,11 +35,19 @@ def get_movement():
     if len(history) < 5:
         return 0
 
-    avg = sum(history) / len(history)
-    diff = abs(ping - avg)
+    # 🔹 медіана (стабільніше ніж середнє)
+    sorted_hist = sorted(history)
+    median = sorted_hist[len(sorted_hist)//2]
 
-    # нормалізація (під UI)
-    movement = min(diff / 10, 1)
+    diff = abs(ping - median)
+
+    # 🔹 адаптивна нормалізація
+    movement = diff / (median + 20)
+
+    # 🔹 згладжування
+    movement = min(movement, 1)
+
+    print(f"PING={ping:.2f} MEDIAN={median:.2f} DIFF={diff:.2f} MOVE={movement:.3f}")
 
     return movement
 
