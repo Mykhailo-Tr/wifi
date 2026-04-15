@@ -56,19 +56,28 @@ function drawRadar() {
     let cy = canvas.height / 2;
     let radius = Math.min(cx, cy) * 0.9;
 
+    // коло
     ctx.strokeStyle = "green";
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.stroke();
 
+    // точки
     points.forEach(p => {
         ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = "red";
+
+        // 🔥 колір залежить від сили
+        if (p.power > 0.5) ctx.fillStyle = "red";
+        else if (p.power > 0.2) ctx.fillStyle = "yellow";
+        else ctx.fillStyle = "lime";
+
         ctx.beginPath();
         ctx.arc(
-            cx + Math.cos(p.angle)*p.r*radius,
-            cy + Math.sin(p.angle)*p.r*radius,
-            5, 0, Math.PI*2
+            cx + Math.cos(p.angle) * p.r * radius,
+            cy + Math.sin(p.angle) * p.r * radius,
+            6,
+            0,
+            Math.PI * 2
         );
         ctx.fill();
     });
@@ -88,12 +97,13 @@ async function fetchData() {
 
         log("movement: " + data.movement.toFixed(3));
 
-        // 🔥 тимчасово дуже чутливо
-        if (data.movement > 0.02) {
+        // 🔥 нормальний поріг
+        if (data.movement > 0.05) {
             points.push({
                 angle: Math.random() * Math.PI * 2,
                 r: 1 - data.movement,
-                alpha: 1
+                alpha: 1,
+                power: data.movement
             });
         }
 
@@ -102,7 +112,7 @@ async function fetchData() {
     }
 }
 
-setInterval(fetchData, 500);
+setInterval(fetchData, 400);
 
 function loop() {
     updatePoints();
